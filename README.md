@@ -8,23 +8,18 @@ Convert any colour photo into a realistic pencil sketch with a simple Tkinter GU
 
 ## Demo
 
-> TODO: Add before/after screenshots for highest impact. Upload to `docs/` then uncomment below:
-
-- Input: `docs/input-example.jpg`
-- Output: `docs/output-example.png`
-
-<!-- Uncomment after adding docs/ images:
-![Input example](docs/input-example.jpg)
+![Input example](docs/input-example.png)
 ![Output example](docs/output-example.png)
--->
 
-GUI flow: Choose Image → 5-step Matplotlib plot + 300x300 preview → Save Sketch as PNG.
+GUI flow: Choose Image → adjust Stroke thickness slider → 5-step Matplotlib plot + aspect-preserving preview → Save Sketch as PNG.
+Headless: `python main.py --input photo.jpg --output sketch.png --ksize 31 --no-steps`.
 
 ## Features
 
-- Tkinter GUI: Choose Image, Save Sketch, live preview
+- Tkinter GUI: Choose Image, Save Sketch, live preview with Stroke thickness slider (5-51) + Auto-ksize
 - Step visualization with Matplotlib: Original, Grayscale, Inverted, Blurred, Pencil Sketch
-- One-click PNG export via file dialog
+- Headless CLI: `--input --output --ksize --no-steps --auto-ksize` for batch use, import-safe
+- One-click PNG export via file dialog, aspect-preserving preview
 - Works with JPG, JPEG, PNG
 
 ## Stack
@@ -49,6 +44,8 @@ Requires Python 3.8+ on macOS / Windows / Linux. Tkinter ships with stdlib Pytho
 
 ```bash
 python main.py
+# headless / batch:
+python main.py --input photo.jpg --output sketch.png --ksize 31 --no-steps
 ```
 
 1. Click "Choose Image"
@@ -58,34 +55,33 @@ python main.py
 
 ## How It Works
 
-Pipeline in `process_image(path)` → returns `img, gray, inverted, blurred, sketch`:
+Pipeline in `process_image(path, ksize=21, auto_ksize=False)` → returns `img, gray, inverted, blurred, sketch`:
 
 1. `grayscale` — BGR → Gray via `cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)`
 2. `invert` — `255 - gray`
-3. `blur` — `GaussianBlur` `21x21`, `sigmaX=0, sigmaY=0` on inverted image
+3. `blur` — `GaussianBlur` with odd-normalized `ksize` (default 21, slider 5-51, auto-ksize scales with image size), `sigmaX=0, sigmaY=0` on inverted image
 4. `dodge` — `cv2.divide(gray, 255 - blurred, scale=256)` — core sketch effect
-5. Display with Matplotlib + save with `cv2.imwrite`
+5. Display with Matplotlib + save with `cv2.imwrite`, errors handled with clear messages
 
 ## Structure
 
 ```
 .
-├── main.py            # GUI + pipeline (renamed from PhotoInversion_proj.py)
+├── main.py            # GUI + slider + CLI + pipeline
 ├── requirements.txt   # opencv-python, numpy, matplotlib, Pillow
 ├── README.md
 ├── LICENSE            # MIT
 ├── .gitignore
 └── docs/
-    ├── input-example.jpg   # TODO: add sample input
-    └── output-example.png  # TODO: add sample output
+    ├── input-example.png
+    └── output-example.png
 ```
 
 ## Limitations
 
-- Fixed blur kernel `(21,21)` — no slider for line thickness
-- Single image at a time, no batch / CLI mode
-- Large images (>4000px) are slow in Matplotlib preview
-- Tkinter preview fixed at `300x300`, aspect ratio not preserved
+- Single image at a time in GUI, CLI handles one file per run (no folder batch yet)
+- Large images (>4000px) are slow in Matplotlib preview — use `--no-steps` headless for speed
+- Preview scales to fit but very small images upscale softly
 
 ## Learnings
 
@@ -95,10 +91,11 @@ Pipeline in `process_image(path)` → returns `img, gray, inverted, blurred, ske
 
 ## Next Improvements
 
-- [ ] Thickness slider for blur kernel
-- [ ] Preserve aspect ratio in preview
-- [ ] CLI flags `--input --output` for no-GUI batch use
-- [ ] Sample input/output in `docs/`
+- [x] Thickness slider for blur kernel — done (slider 5-51 + auto-ksize)
+- [x] Preserve aspect ratio in preview — done
+- [x] CLI flags `--input --output` for no-GUI batch use — done
+- [x] Sample input/output in `docs/` — done
+- [ ] Folder batch mode + before/after contact sheet export
 
 ## License
 

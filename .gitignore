@@ -12,3 +12,6 @@ Thumbs.db
 *.log
 sketch.png
 output*.png
+# local test captures at root — canonical demos live in docs/
+sample_*.png
+test_*.png
